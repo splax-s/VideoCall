@@ -1,17 +1,56 @@
+/* eslint-disable no-trailing-spaces */
 /* eslint-disable no-unused-vars */
 /* eslint-disable eol-last */
 /* eslint-disable prettier/prettier */
 /* eslint-disable semi */
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native'
 import React, {useState, useEffect} from 'react'
+import {Voximplant} from 'react-native-voximplant';
+import {useNavigation} from '@react-navigation/core'
 
 const LoginScreen = () => {
+
+    const navigation = useNavigation()
+    
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
-    const signIn = () =>{
-        console.log('pressed')
-    }
+    const voximplant = Voximplant.getInstance();
+    
+
+
+    useEffect(() => {
+        const connectVoximplant = async () => { 
+            const clientState = await voximplant.getClientState(); 
+            console.log(clientState)
+            if (clientState === Voximplant.ClientState.DISCONNECTED) { 
+              await voximplant.connect(); 
+            } else if (clientState === Voximplant.ClientState.LOGGED_IN) { 
+              navigation.reset({index: 0, routes: [{name: 'Contacts'}]}); 
+              return; 
+            }
+        }
+        connectVoximplant();
+    }, [voximplant, navigation]);
+
+    
+
+
+    const signIn = async() =>{
+        try { 
+            const work = await voximplant.login( 
+              `${userName}@video.splax.voximplant.com`, 
+              password, 
+            ); 
+            console.log(work)
+            navigation.reset({index: 0, routes: [{name: 'Contacts'}]}); 
+          } catch (e) { 
+              console.log(e)
+            Alert.alert(e.name, `Error code: ${e.code}`); 
+          } 
+          
+    };      
+
   return (
     <View style={styles.page}>
       <TextInput value={userName} autoCapitalize="none" style={styles.input} placeholder="username" onChangeText={setUserName} placeholderTextColor={'grey'}/>
